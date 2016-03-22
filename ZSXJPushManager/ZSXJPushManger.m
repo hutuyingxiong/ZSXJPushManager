@@ -48,7 +48,7 @@ static NSInteger maxLocalNotificationsCount = 64;
                           keyWord:(NSString *)theKey
                       localPolicy:(ZSXJLocalNotiType)policy
        receiveNotificationHandler:(ZSXJLocalHandleBlock)receiveHandler {
-    [self setIdentifierKey:theKey];
+    
     [self convertRemoteNotification:userInfo
                             keyWord:theKey
                         localPolicy:policy];
@@ -91,6 +91,7 @@ void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
                       localPolicy:(ZSXJLocalNotiType)policy {
     NSArray *localNotifcations = [[self class] getLocalNotifications];
 //    NSAssert(localNotifcations.count < maxLocalNotificationsCount, @"Local notifcation has beyond the limit of system defined");
+    [self setIdentifierKey:theKey];
     if (localNotifcations.count > maxLocalNotificationsCount) {
         return;
     }
@@ -157,7 +158,10 @@ void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
 
 #pragma mark - Method Swizzling
 - (void)zsxj_application:(UIApplication *)application receiveLocalNotification:(UILocalNotification *) localNoti {
-    NSLog(@"self.notiBlock %@", [ZSXJPushManger sharedManager].notiBlockDict);
+    NSLog(@"pushmanager notiBlock Dict %@", [ZSXJPushManger sharedManager].notiBlockDict);
+    NSLog(@"pushmanager identifierKey %@", [ZSXJPushManger sharedManager].identifierKey);
+    ZSXJLocalHandleBlock block = [[ZSXJPushManger sharedManager].notiBlockDict objectForKey:localNoti.userInfo[@"noti_identifier"]];
+    block(localNoti);
     NSLog(@"method swizzling receive local ");
 //    NSLog(@"localNoti userInfo %@ ", localNoti.userInfo[[[self sharedManager] identifierKey]]);
     
