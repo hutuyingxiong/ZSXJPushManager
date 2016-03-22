@@ -24,13 +24,6 @@
     });
     return sharedManager;
 }
-//- (void)setIdentifierKey:(NSString *)identifierKey {
-//    if (!_identifierKey) {
-//        _identifierKey = [[NSMutableString alloc] init];
-//    }
-//    
-//    _identifierKey = [identifierKey mutableCopy];
-//}
 - (instancetype)init
 {
     self = [super init];
@@ -38,6 +31,12 @@
         _notiBlockDict = [[NSMutableDictionary alloc] init];
         _identifierKey = [[NSMutableString alloc] init];
     }
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class clazz = object_getClass(self);
+        swizzleAppDelegateMethod(clazz, @selector(zsxj_application: receiveLocalNotification:));
+    });
     return self;
 }
 //+ (void)load {
@@ -58,11 +57,7 @@ static NSInteger maxLocalNotificationsCount = 64;
     }
     [notiDict setObject:receiveHandler forKey:userInfo[theKey]];
     
-    static dispatch_once_t onceToken;
-    dispatch_once (&onceToken, ^{
-        Class clazz = object_getClass(self);
-        swizzleAppDelegateMethod(clazz, @selector(zsxj_application: receiveLocalNotification:));
-    });
+    
 }
 void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
     //Hook the delegate method in AppDelegate
@@ -90,13 +85,12 @@ void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
                           keyWord:(NSString *)theKey
                       localPolicy:(ZSXJLocalNotiType)policy {
     NSArray *localNotifcations = [[self class] getLocalNotifications];
-//    NSAssert(localNotifcations.count < maxLocalNotificationsCount, @"Local notifcation has beyond the limit of system defined");
+    NSAssert(localNotifcations.count < maxLocalNotificationsCount, @"Local notifcation has beyond the limit of system defined");
     [self setIdentifierKey:theKey];
     if (localNotifcations.count > maxLocalNotificationsCount) {
         return;
     }
     else {
-//        ZSXJLocalNotification *noti = [[ZSXJLocalNotification alloc] initWithUserInfo:userInfo identifierKey:theKey type:policy];
         UILocalNotification *noti = [self initializeLocalNotification:userInfo
                                                         identifierKey:theKey];
         NSAssert(noti, @"Initialized a local notification failed");
@@ -104,7 +98,7 @@ void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
 }
 - (UILocalNotification *)initializeLocalNotification:(NSDictionary *) userInfo identifierKey:(NSString *) theIdentifierKey {
     UILocalNotification *localNoti = [[UILocalNotification alloc] init];
-    localNoti.fireDate = [NSDate dateWithTimeIntervalSinceNow:60];
+    localNoti.fireDate = [NSDate dateWithTimeIntervalSinceNow:30];
     localNoti.timeZone = [NSTimeZone defaultTimeZone];
     localNoti.alertBody = userInfo[@"content"];
     localNoti.soundName = userInfo[@"sound"];
@@ -161,53 +155,11 @@ void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
     NSLog(@"pushmanager notiBlock Dict %@", [ZSXJPushManger sharedManager].notiBlockDict);
     NSLog(@"pushmanager identifierKey %@", [ZSXJPushManger sharedManager].identifierKey);
     ZSXJLocalHandleBlock block = [[ZSXJPushManger sharedManager].notiBlockDict objectForKey:localNoti.userInfo[@"noti_identifier"]];
-    block(localNoti);
+    if (block) {
+        block(localNoti);
+    }
     NSLog(@"method swizzling receive local ");
-//    NSLog(@"localNoti userInfo %@ ", localNoti.userInfo[[[self sharedManager] identifierKey]]);
-    ZSXJLocalHandleBlock block = [[ZSXJPushManger sharedManager].notiBlockDict objectForKey:localNoti.userInfo[@"noti_identifier"]];
-    block(localNoti);
     
 }
-
-//+ (void)registerLocalNotification:(NSInteger)alertTime {
-//    UILocalNotification *localNotification = [[UILocalNotification alloc] init];
-//    NSDate *fireDate = [NSDate dateWithTimeIntervalSinceNow:alertTime];
-//    localNotification.fireDate = fireDate;
-////    localNotification.repeatInterval = 3;
-//    localNotification.timeZone = [NSTimeZone defaultTimeZone];
-//    localNotification.alertBody = @"通知body";
-//    localNotification.applicationIconBadgeNumber += 1;
-//    localNotification.soundName = UILocalNotificationDefaultSoundName;
-//    NSDictionary *userDict = @{@"key" : @"localNotification"};
-//    localNotification.userInfo = userDict;
-//    
-//    if ([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)]) {
-//        
-//        UIUserNotificationType type = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
-//        
-//        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:type categories:nil];
-//        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-//        localNotification.repeatInterval = NSCalendarUnitMinute;
-//    } else {
-//        localNotification.repeatInterval = NSCalendarUnitMinute;
-//    }
-//    
-//    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-//    
-//}
-//
-//+ (void)cancleLocalNotificationWithKey:(NSString *) key {
-//    NSArray *localNotifications = [UIApplication sharedApplication].scheduledLocalNotifications;
-//    for (UILocalNotification *notification in localNotifications) {
-//        NSDictionary *userInfo = notification.userInfo;
-////        if ([userInfo[@"This is value"] isEqualToString:@"key"]) {
-////            NSString *info = userInfo[key];
-////            if (info != nil) {
-//                [[UIApplication sharedApplication] cancelLocalNotification:notification];
-////                break;
-////            }
-//        }
-////    }
-//}
 
 @end

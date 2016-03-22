@@ -23,7 +23,7 @@
 //                   receiveNotificationHandler:^(UILocalNotification *localNotification) {
 //                       NSLog(@"receive the local notification");
 //                   }];
-    
+    [ZSXJPushManger sharedManager];
     return YES;
 }
 

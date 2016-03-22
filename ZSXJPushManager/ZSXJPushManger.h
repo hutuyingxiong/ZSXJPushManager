@@ -28,10 +28,27 @@ typedef void(^ZSXJLocalHandleBlock)(UILocalNotification *localNotification);
 
 + (instancetype) sharedManager;
 
-
+/**
+ *  @author lzy, 16-03-22 15:03:32
+ *
+ *  @brief Convert a RemoteNotification to a Local Notification using specific policy.
+ *
+ *  @param userInfo the remote notification's user info dictionary
+ *  @param theKey   the key to identify a push notification
+ *  @param policy   Frequently or tip three times.
+ */
 - (void)convertRemoteNotification:(NSDictionary *) userInfo keyWord:(NSString *) theKey localPolicy:(ZSXJLocalNotiType) policy;
 
-
+/**
+ *  @author lzy, 16-03-22 15:03:44
+ *
+ *  @brief Convert a RemoteNotification to a Local Notification using specific policy.
+ *
+ *  @param userInfo       the remote notification's user info dictionary
+ *  @param theKey         the key to identify a push notification
+ *  @param policy         Frequently or tip three times.
+ *  @param receiveHandler the handler block when receive a localNotification
+ */
 - (void)convertRemoteNotification:(NSDictionary *)userInfo keyWord:(NSString *)theKey localPolicy:(ZSXJLocalNotiType)policy receiveNotificationHandler:(ZSXJLocalHandleBlock) receiveHandler;
 
 + (void)cancelLocalNotification:(NSString *)key identifier:(NSString *)identifier;
