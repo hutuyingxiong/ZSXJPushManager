@@ -11,11 +11,12 @@
 #import <objc/runtime.h>
 
 @interface ZSXJPushManger()
-@property (nonatomic,strong)NSMutableDictionary *notiBlockDict;
+@property (nonatomic,strong,getter=fetchNotiBlock,setter=setNotiBlockDict:)NSMutableDictionary *notiBlockDict;
 
 @end
 
 @implementation ZSXJPushManger
+@synthesize notiBlockDict;
 + (instancetype) sharedManager {
     static ZSXJPushManger *sharedManager = nil;
     static dispatch_once_t onceToken;
@@ -28,7 +29,7 @@
 {
     self = [super init];
     if (self) {
-        _notiBlockDict = [[NSMutableDictionary alloc] init];
+        notiBlockDict = [[NSMutableDictionary alloc] init];
         _identifierKey = [[NSMutableString alloc] init];
     }
     
@@ -39,9 +40,45 @@
     });
     return self;
 }
-//+ (void)load {
-//    
+//- (instancetype)initWithCoder:(NSCoder *) aDecoder {
+//    NSLog(@"ZSXJPushManager init with coder");
+//    self = [super init];
+//    if (self != nil) {
+//        _identifierKey = [[aDecoder decodeObjectForKey:@"identifierKey"] copy];
+//        _notiBlockDict = [[aDecoder decodeObjectForKey:@"notiBlockDict"] copy];
+//    }
+//    return self;
 //}
+//- (void)encodeWithCoder:(NSCoder *)aCoder {
+//    NSLog(@"encode With Coder");
+//    [aCoder encodeObject:_identifierKey forKey:@"identifierKey"];
+//    [aCoder encodeObject:_notiBlockDict forKey:@"notiBlockDict"];
+//}
+- (void)setNotiBlockDict:(NSMutableDictionary *)theNotiBlockDict {
+    if (!notiBlockDict) {
+        notiBlockDict = [NSMutableDictionary alloc];
+    }
+    //Append the key value pair
+    
+    [notiBlockDict addEntriesFromDictionary:theNotiBlockDict];
+    
+    //Archieve the dict object
+    NSString *filePath = [NSHomeDirectory() stringByAppendingPathComponent:@"zsxj_noti_dict.src"];
+    BOOL success = [NSKeyedArchiver archiveRootObject:notiBlockDict
+                                               toFile:filePath];
+    NSAssert(success, @"Failed to archieve a noti dict ");
+}
+
+- (NSMutableDictionary *)fetchNotiBlock {
+    NSAssert(notiBlockDict, @"notiBlockDict is empty!!");
+//    if (!notiBlockDict) {
+        //fetch the dict in archiever
+        NSString *filePath = [NSHomeDirectory() stringByAppendingPathComponent: @"zsxj_noti_dict.src"];
+        NSMutableDictionary *unarchieverDict = [NSKeyedUnarchiver unarchiveObjectWithFile:filePath];
+        [notiBlockDict addEntriesFromDictionary:unarchieverDict];
+//    }
+    return notiBlockDict;
+}
 static NSInteger maxLocalNotificationsCount = 64;
 - (void)convertRemoteNotification:(NSDictionary *)userInfo
                           keyWord:(NSString *)theKey
@@ -51,11 +88,11 @@ static NSInteger maxLocalNotificationsCount = 64;
     [self convertRemoteNotification:userInfo
                             keyWord:theKey
                         localPolicy:policy];
-    NSMutableDictionary *notiDict = _notiBlockDict;
-    if (!notiDict) {
-        notiDict = [[NSMutableDictionary alloc] init];
-    }
-    [notiDict setObject:receiveHandler forKey:userInfo[theKey]];
+//    NSMutableDictionary *notiDict = self.notiBlockDict;
+//    if (!notiDict) {
+//        notiDict = [[NSMutableDictionary alloc] init];
+//    }
+    [self.notiBlockDict setObject:receiveHandler forKey:userInfo[theKey]];
     
     
 }
@@ -137,18 +174,11 @@ void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
     }
     
 }
-
-/**
- *  @author lzy, 16-03-18 11:03:55
- *
- *  @brief Fetch the LocalNotifications in the system at current time.
- *
- *  @return Array of the local notifications.
- */
 + (NSArray *)getLocalNotifications {
     NSArray *localNotifications = [UIApplication sharedApplication].scheduledLocalNotifications;
     return localNotifications;
 }
+#pragma mark - Archieve the block Dict
 
 #pragma mark - Method Swizzling
 - (void)zsxj_application:(UIApplication *)application receiveLocalNotification:(UILocalNotification *) localNoti {

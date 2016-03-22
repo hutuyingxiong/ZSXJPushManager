@@ -24,7 +24,7 @@ typedef void(^ZSXJLocalHandleBlock)(UILocalNotification *localNotification);
 
 @property (nonatomic, strong) ZSXJPushManger *sharedManager;
 @property (nonatomic, strong) NSString * identifierKey;
-@property (nonatomic, copy) ZSXJLocalHandleBlock handleBlock;
+//@property (nonatomic, copy) ZSXJLocalHandleBlock handleBlock;
 
 + (instancetype) sharedManager;
 
