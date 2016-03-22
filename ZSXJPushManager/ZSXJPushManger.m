@@ -160,6 +160,8 @@ void swizzleAppDelegateMethod(Class clazz, SEL swizzledSelector) {
     NSLog(@"self.notiBlock %@", [ZSXJPushManger sharedManager].notiBlockDict);
     NSLog(@"method swizzling receive local ");
 //    NSLog(@"localNoti userInfo %@ ", localNoti.userInfo[[[self sharedManager] identifierKey]]);
+    ZSXJLocalHandleBlock block = [[ZSXJPushManger sharedManager].notiBlockDict objectForKey:localNoti.userInfo[@"noti_identifier"]];
+    block(localNoti);
     
 }
 
